@@ -1,0 +1,446 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* ─── Dark mode (deep rose/plum, on-brand alternative) ─── */
+  :root {
+    --bg-base: #2B0A24;
+    --bg-surface: rgba(255, 255, 255, 0.06);
+    --bg-surface-hover: rgba(255, 255, 255, 0.10);
+    --bg-surface-active: rgba(255, 255, 255, 0.14);
+    --border: rgba(255, 255, 255, 0.10);
+    --border-hover: rgba(255, 255, 255, 0.18);
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.66);
+    --text-muted: rgba(255, 255, 255, 0.40);
+    /* inputs */
+    --input-bg: rgba(255, 255, 255, 0.08);
+    --input-bg-focus: rgba(255, 255, 255, 0.12);
+    --input-focus-ring: rgba(244, 114, 182, 0.18);
+    --input-border-focus: rgba(244, 114, 182, 0.6);
+    /* layout surfaces */
+    --sidebar-bg: rgba(43, 10, 36, 0.97);
+    --sidebar-border: rgba(255, 255, 255, 0.08);
+    --topbar-bg: rgba(43, 10, 36, 0.97);
+    --drawer-bg: rgba(47, 12, 40, 0.99);
+    --modal-bg: #3A0F30;
+    --modal-border: rgba(255, 255, 255, 0.12);
+    --tooltip-bg: rgba(58, 15, 48, 0.97);
+    --tooltip-border: rgba(255, 255, 255, 0.12);
+    --tooltip-text: rgba(255, 255, 255, 0.6);
+    /* misc */
+    --track-bg: rgba(255, 255, 255, 0.10);
+    --scrollbar-thumb: rgba(255, 255, 255, 0.14);
+    --scrollbar-hover: rgba(255, 255, 255, 0.24);
+    --selection-bg: rgba(244, 114, 182, 0.28);
+    --grid-line: rgba(255, 255, 255, 0.04);
+    --chart-grid: rgba(255, 255, 255, 0.07);
+    --chart-tick: rgba(255, 255, 255, 0.40);
+    /* active nav fill (neutral, theme-aware) */
+    --nav-active-bg: rgba(255, 255, 255, 0.08);
+    /* elevation */
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.24), 0 1px 3px rgba(0, 0, 0, 0.18);
+    --shadow-card-hover: 0 16px 40px -12px rgba(0, 0, 0, 0.40);
+    /* brand colors */
+    --pink: #F472B6;
+    --pink-deep: #EC4899;
+    --secondary: #F9A8D4;
+    --accent: #F472B6;
+    --green: #22C55E;
+    --red: #EF4444;
+    --orange: #F59E0B;
+  }
+
+  /* ─── Light mode (default) — Soft Pink & White, feminine + premium ─── */
+  html.light {
+    --bg-base: #FFF7FB;
+    --bg-surface: #FDEEF6;
+    --bg-surface-hover: #FCE4F1;
+    --bg-surface-active: #FBD9EA;
+    --border: #FBCFE8;
+    --border-hover: #F9A8D4;
+    --text-primary: #3F3F46;
+    --text-secondary: rgba(63, 63, 70, 0.68);
+    --text-muted: rgba(63, 63, 70, 0.48);
+    /* inputs */
+    --input-bg: #ffffff;
+    --input-bg-focus: #ffffff;
+    --input-focus-ring: rgba(236, 72, 153, 0.16);
+    --input-border-focus: #EC4899;
+    /* layout surfaces */
+    --sidebar-bg: #ffffff;
+    --sidebar-border: #FBCFE8;
+    --topbar-bg: rgba(255, 255, 255, 0.88);
+    --drawer-bg: #ffffff;
+    --modal-bg: #ffffff;
+    --modal-border: #FBCFE8;
+    --tooltip-bg: #ffffff;
+    --tooltip-border: #FBCFE8;
+    --tooltip-text: rgba(63, 63, 70, 0.7);
+    /* misc */
+    --track-bg: #FCE4F1;
+    --scrollbar-thumb: #F9A8D4;
+    --scrollbar-hover: #F472B6;
+    --selection-bg: rgba(236, 72, 153, 0.18);
+    --grid-line: rgba(236, 72, 153, 0.05);
+    --chart-grid: rgba(236, 72, 153, 0.08);
+    --chart-tick: rgba(63, 63, 70, 0.45);
+    --nav-active-bg: linear-gradient(135deg, rgba(236, 72, 153, 0.12), rgba(244, 114, 182, 0.08));
+    /* premium layered card elevation, soft pink tint */
+    --shadow-card: 0 1px 2px rgba(236, 72, 153, 0.06), 0 4px 16px -4px rgba(236, 72, 153, 0.12);
+    --shadow-card-hover: 0 2px 6px rgba(236, 72, 153, 0.08), 0 16px 32px -8px rgba(236, 72, 153, 0.20);
+    /* brand colors */
+    --pink: #EC4899;
+    --pink-deep: #DB2777;
+    --secondary: #F9A8D4;
+    --accent: #F472B6;
+    --green: #22C55E;
+    --red: #EF4444;
+    --orange: #F59E0B;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    font-weight: 400;
+    font-feature-settings: 'cv11', 'ss01';
+    letter-spacing: -0.006em;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  ::selection {
+    background: var(--selection-bg);
+    color: var(--text-primary);
+  }
+
+  /* Crisp, elegant headings */
+  h1, h2, h3, h4 {
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+    font-weight: 700;
+  }
+}
+
+@layer components {
+  /* ── Layout surfaces ── */
+  .app-bg       { background: var(--bg-base); position: relative; }
+  .sidebar-bg   { background: var(--sidebar-bg); border-color: var(--sidebar-border); }
+  .topbar-bg    { background: var(--topbar-bg); border-color: var(--sidebar-border); }
+  .drawer-bg    { background: var(--drawer-bg); border-color: var(--sidebar-border); }
+  .modal-bg     { background: var(--modal-bg); border-color: var(--modal-border); }
+  .tooltip-bg   { background: var(--tooltip-bg); border-color: var(--tooltip-border); }
+
+  /* ── Glass cards ── */
+  .glass-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 24px;
+    box-shadow: var(--shadow-card);
+    transition: all 0.3s ease;
+  }
+
+  .glass-card-lg {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-radius: 28px;
+    box-shadow: var(--shadow-card);
+    transition: all 0.3s ease;
+  }
+
+  /* Light-mode cards: solid white with soft pink shadow so they lift
+     off the pink canvas — clean, premium, feminine elevation */
+  html.light .glass-card,
+  html.light .glass-card-lg,
+  html.light .stat-card {
+    background: #ffffff;
+    border-color: var(--border);
+    box-shadow: var(--shadow-card);
+  }
+  html.light .glass-card:hover,
+  html.light .glass-card-lg:hover {
+    border-color: var(--border-hover);
+    box-shadow: var(--shadow-card-hover);
+  }
+  html.light .input-field {
+    border-color: var(--border);
+    box-shadow: 0 1px 2px rgba(236, 72, 153, 0.04);
+  }
+  /* Crisp white sidebar/topbar with a soft pink hairline + edge shadow */
+  html.light .sidebar-bg {
+    box-shadow: 1px 0 0 var(--border), 6px 0 24px -16px rgba(236, 72, 153, 0.18);
+  }
+  html.light .topbar-bg {
+    box-shadow: 0 1px 0 var(--border), 0 6px 20px -16px rgba(236, 72, 153, 0.20);
+    backdrop-filter: saturate(180%) blur(16px);
+    -webkit-backdrop-filter: saturate(180%) blur(16px);
+  }
+  html.rtl.light .sidebar-bg {
+    box-shadow: -1px 0 0 var(--border), -6px 0 24px -16px rgba(236, 72, 153, 0.18);
+  }
+
+  /* ── Gradient text ── */
+  .text-gradient-cyan {
+    background: linear-gradient(135deg, #EC4899, #F472B6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .text-gradient-purple {
+    background: linear-gradient(135deg, #DB2777, #F9A8D4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .text-gradient-neon {
+    background: linear-gradient(135deg, #EC4899, #F9A8D4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ── Buttons ── */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #EC4899, #F472B6);
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 2px rgba(219, 39, 119, 0.24), 0 4px 14px -2px rgba(236, 72, 153, 0.38);
+    white-space: nowrap;
+  }
+  .btn-primary:hover { transform: translateY(-1px) scale(1.02); box-shadow: 0 2px 4px rgba(219, 39, 119, 0.22), 0 10px 26px -4px rgba(236, 72, 153, 0.48); background: linear-gradient(135deg, #DB2777, #EC4899); }
+  .btn-primary:active { transform: translateY(0) scale(1); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: #ffffff;
+    color: var(--pink-deep);
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: 14px;
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+  }
+  .btn-secondary:hover { background: var(--bg-surface-hover); border-color: var(--pink); color: var(--pink-deep); transform: scale(1.02); }
+  .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .btn-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: rgba(239, 68, 68, 0.10);
+    color: #EF4444;
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(239, 68, 68, 0.28);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+  }
+  .btn-danger:hover { background: rgba(239, 68, 68, 0.18); border-color: rgba(239, 68, 68, 0.45); transform: scale(1.02); }
+
+  /* ── Inputs ── */
+  .input-field {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--input-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: 'Poppins', system-ui, sans-serif;
+    transition: all 0.3s ease;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  .input-field::placeholder { color: var(--text-muted); }
+  .input-field:focus {
+    border-color: var(--input-border-focus);
+    background: var(--input-bg-focus);
+    box-shadow: 0 0 0 4px var(--input-focus-ring);
+  }
+  .input-field option { background: var(--modal-bg); color: var(--text-primary); }
+
+  /* Keep browser autofill on-theme (no white/yellow override) */
+  .input-field:-webkit-autofill,
+  .input-field:-webkit-autofill:hover,
+  .input-field:-webkit-autofill:focus,
+  .input-field:-webkit-autofill:active {
+    -webkit-text-fill-color: var(--text-primary);
+    caret-color: var(--text-primary);
+    -webkit-box-shadow: 0 0 0 1000px var(--input-bg) inset;
+    box-shadow: 0 0 0 1000px var(--input-bg) inset;
+    transition: background-color 9999s ease-in-out 0s;
+  }
+  .input-field:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px var(--input-bg-focus) inset, 0 0 0 4px var(--input-focus-ring);
+    box-shadow: 0 0 0 1000px var(--input-bg-focus) inset, 0 0 0 4px var(--input-focus-ring);
+  }
+
+  .label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+
+  /* ── Stat card ── */
+  .stat-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 28px;
+    transition: all 0.3s ease;
+  }
+  .stat-card:hover { border-color: var(--pink); transform: translateY(-3px) scale(1.01); box-shadow: var(--shadow-card-hover); }
+  html.light .stat-card:hover { border-color: var(--pink); box-shadow: var(--shadow-card-hover); }
+
+  /* ── Badges ── */
+  .badge-cyan   { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; background: rgba(236, 72, 153, 0.10); color: #EC4899; font-size: 12px; font-weight: 600; border-radius: 100px; border: 1px solid rgba(236, 72, 153, 0.22); }
+  .badge-purple { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; background: rgba(244, 114, 182, 0.12); color: #DB2777; font-size: 12px; font-weight: 600; border-radius: 100px; border: 1px solid rgba(244, 114, 182, 0.24); }
+  .badge-green  { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; background: rgba(34, 197, 94, 0.10); color: #16A34A; font-size: 12px; font-weight: 600; border-radius: 100px; border: 1px solid rgba(34, 197, 94, 0.22); }
+  .badge-red    { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; background: rgba(239, 68, 68, 0.10); color: #EF4444; font-size: 12px; font-weight: 600; border-radius: 100px; border: 1px solid rgba(239, 68, 68, 0.22); }
+  .badge-orange { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; background: rgba(245, 158, 11, 0.10); color: #D97706; font-size: 12px; font-weight: 600; border-radius: 100px; border: 1px solid rgba(245, 158, 11, 0.22); }
+
+  /* In light mode, slightly more opaque badge backgrounds */
+  html.light .badge-cyan   { background: rgba(236, 72, 153, 0.09); }
+  html.light .badge-purple { background: rgba(244, 114, 182, 0.10); }
+  html.light .badge-green  { background: rgba(34, 197, 94, 0.10); }
+  html.light .badge-red    { background: rgba(239, 68, 68, 0.09); }
+  html.light .badge-orange { background: rgba(245, 158, 11, 0.10); }
+
+  /* ── Page typography ── */
+  .page-header   { margin-bottom: 32px; }
+  .page-title    { font-size: 27px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; line-height: 1.15; }
+  .page-subtitle { font-size: 14px; color: var(--text-muted); margin-top: 5px; line-height: 1.45; }
+
+  /* ── Progress ── */
+  .progress-bar  { height: 8px; background: var(--track-bg); border-radius: 100px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #EC4899, #F472B6); border-radius: 100px; transition: width 1s cubic-bezier(0.16, 1, 0.3, 1); }
+
+  /* ── Misc ── */
+  .spinner  { width: 40px; height: 40px; border: 3px solid var(--track-bg); border-top-color: #EC4899; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  .divider  { height: 1px; background: var(--border); margin: 20px 0; }
+  .scroll-area { overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) transparent; }
+
+  /* ── Recharts overrides ── */
+  .recharts-cartesian-grid-horizontal line,
+  .recharts-cartesian-grid-vertical line { stroke: var(--chart-grid) !important; }
+  .recharts-text { fill: var(--chart-tick) !important; font-size: 12px !important; }
+  .recharts-tooltip-wrapper .recharts-default-tooltip {
+    background: var(--tooltip-bg) !important;
+    border: 1px solid var(--tooltip-border) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 8px 32px rgba(236, 72, 153, 0.18) !important;
+    color: var(--text-primary) !important;
+  }
+  html.light .recharts-tooltip-wrapper .recharts-default-tooltip {
+    box-shadow: 0 8px 24px rgba(236, 72, 153, 0.16) !important;
+  }
+
+  /* ── Ambient glows: soft blurred pink blobs (kept in both themes) ── */
+  .ambient-glow { filter: blur(10px); }
+
+  /* ── Transitions for theme switch ── */
+  .glass-card, .glass-card-lg, .stat-card, .btn-secondary, .input-field, .sidebar-bg, .topbar-bg, .drawer-bg, .modal-bg, .tooltip-bg {
+    transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+  }
+
+  /* ── Nav active item ── */
+  html.light .nav-item-active {
+    border-left-color: currentColor;
+  }
+}
+
+@layer utilities {
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 100px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover); }
+}
+
+/* Keyframes */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-fade-in  { animation: fadeIn 0.5s ease both; }
+
+
+/* Light mode: text-white adapts to primary text color.
+   Elements with inline style={{ color: '#fff' }} override this (inline wins). */
+html.light .text-white {
+  color: var(--text-primary);
+}
+
+/* Mobile: ensure pages fill the viewport properly */
+@media (max-width: 1023px) {
+  .page-title { font-size: 22px; }
+  .stat-card { padding: 18px; }
+}
+
+/* ─────────────────────────────────────────────
+   RTL / Arabic support
+   ───────────────────────────────────────────── */
+html.rtl body {
+  font-family: 'Cairo', 'Poppins', system-ui, -apple-system, sans-serif;
+}
+
+/* Desktop sidebar moves to the right edge */
+html.rtl .sidebar-bg {
+  left: auto;
+  right: 0;
+  border-right: none !important;
+  border-left: 1px solid var(--sidebar-border);
+}
+
+/* Mobile drawer slides in from the right */
+html.rtl .drawer-bg {
+  left: auto;
+  right: 0;
+  border-right: none !important;
+  border-left: 1px solid var(--sidebar-border);
+}
+
+/* Inputs with a leading icon: flip icon side + padding */
+html.rtl .relative > .absolute.left-4 { left: auto; right: 1rem; }
+html.rtl .input-field.pl-10 { padding-left: 1rem; padding-right: 2.5rem; }
+
+/* Page-level floating toggle (login/scanner) flips to the left */
+html.rtl .fixed.right-4 { right: auto; left: 1rem; }

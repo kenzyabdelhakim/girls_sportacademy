@@ -1,0 +1,32 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Students collection - students can read their own document
+    match /students/{studentId} {
+      // Allow authenticated users to read any student (for admin)
+      allow read: if request.auth != null;
+      
+      // Allow authenticated users to write (for admin)
+      allow write: if request.auth != null;
+    }
+    
+    // Attendance collection
+    match /attendance/{attendanceId} {
+      // Allow authenticated users to read attendance
+      allow read: if request.auth != null;
+      
+      // Allow authenticated users to write attendance (for admin and scanner)
+      allow write: if request.auth != null;
+    }
+    
+    // Session materials collection
+    match /session_materials/{materialId} {
+      // Allow authenticated users to read materials
+      allow read: if request.auth != null;
+      
+      // Allow authenticated users to write materials (for admin)
+      allow write: if request.auth != null;
+    }
+  }
+}
