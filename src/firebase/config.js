@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
@@ -25,6 +25,16 @@ try {
 } catch (error) {
   console.error('❌ Firebase initialization error:', error);
 }
+
+// Secondary app/auth instance used only for creating student accounts.
+// createUserWithEmailAndPassword() signs in as the account it just created
+// on whichever auth instance it's called with — running it here instead of
+// on the primary `auth` keeps the admin's session untouched.
+export const getSecondaryAuth = () => {
+  const secondaryApp = getApps().find((a) => a.name === 'Secondary')
+    || initializeApp(firebaseConfig, 'Secondary');
+  return getAuth(secondaryApp);
+};
 
 export { auth, db };
 export default app;

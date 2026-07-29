@@ -30,6 +30,7 @@ const Login = () => {
       toast.success(t('login.welcomeBack'));
       navigate('/dashboard');
     } catch (error) {
+      console.error('[Login] auth failed:', error.code || error.message, error);
       if (error.message === 'student_account') {
         toast.error(t('login.isStudent'));
       } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {

@@ -11,8 +11,8 @@ import {
   orderBy,
   serverTimestamp 
 } from 'firebase/firestore';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { db, auth } from '../firebase/config';
+import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { db, getSecondaryAuth } from '../firebase/config';
 
 const STUDENTS_COLLECTION = 'students';
 
@@ -26,14 +26,17 @@ export const addStudent = async (studentData) => {
       throw new Error('Email and password are required for student account');
     }
 
-    // Create Firebase Authentication account
+    // Create Firebase Authentication account on a secondary auth instance so
+    // the admin's own session isn't replaced by the newly created student.
+    const secondaryAuth = getSecondaryAuth();
     const userCredential = await createUserWithEmailAndPassword(
-      auth, 
-      studentData.email, 
+      secondaryAuth,
+      studentData.email,
       studentData.password
     );
-    
+
     const uid = userCredential.user.uid;
+    await signOut(secondaryAuth);
 
     // Create student document in Firestore with the Auth UID as document ID
     const studentDoc = {
