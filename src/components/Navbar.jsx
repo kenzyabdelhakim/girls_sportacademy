@@ -181,8 +181,8 @@ const Sidebar = ({ collapsed, onToggle }) => {
           <AnimatePresence>
             {!collapsed && (
               <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.2 }}>
-                <p className="font-black text-base leading-none tracking-tight" style={{ color: 'var(--text-primary)' }}>SPORT</p>
-                <p className="font-black text-base leading-none tracking-tight mt-0.5" style={{ color: '#EC4899' }}>ACADEMY</p>
+                <p className="font-black text-base leading-none tracking-tight" style={{ color: 'var(--text-primary)' }}>ROVY</p>
+                <p className="font-black text-xs leading-none tracking-wider mt-1" style={{ color: '#EC4899' }}>SWIMMING ACADEMY</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -289,7 +289,10 @@ export const MobileNav = () => {
           <div className="w-8 h-8 rounded-lg flex items-center justify-center p-1.5" style={{ background: 'linear-gradient(135deg, #DB2777, #EC4899)' }}>
             <Logo variant="mark" tone="white" className="w-full h-full" />
           </div>
-          <span className="font-black text-sm tracking-tight" style={{ color: 'var(--text-primary)' }}>SPORT ACADEMY</span>
+          <div className="flex flex-col leading-none min-w-0">
+            <span className="font-black text-sm tracking-tight truncate" style={{ color: 'var(--text-primary)' }}>ROVY</span>
+            <span className="font-black text-[10px] tracking-wider truncate mt-0.5" style={{ color: '#EC4899' }}>SWIMMING ACADEMY</span>
+          </div>
         </Link>
         <div className="flex items-center gap-2">
           <motion.button
@@ -341,7 +344,7 @@ export const MobileNav = () => {
                     <Logo variant="mark" tone="white" className="w-full h-full" />
                   </div>
                   <div>
-                    <p className="font-black text-sm leading-none" style={{ color: 'var(--text-primary)' }}>SPORT ACADEMY</p>
+                    <p className="font-black text-sm leading-none" style={{ color: 'var(--text-primary)' }}>ROVY SWIMMING ACADEMY</p>
                     <p className="text-xs mt-0.5" style={{ color: '#EC4899' }}>{t('nav.adminPanel')}</p>
                   </div>
                 </div>

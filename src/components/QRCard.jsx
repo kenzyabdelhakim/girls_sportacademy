@@ -49,11 +49,11 @@ const QRCard = ({ student }) => {
       .id{font-size:13px;color:#6b7280;margin-bottom:4px;}img.qr{margin:20px 0;}
       @media print{body{padding:0;}}
       </style></head><body><div class="card">
-      <img class="logo" src="${logoUrl}" alt="Sport Academy" />
+      <img class="logo" src="${logoUrl}" alt="Rovy Swimming Academy" />
       <div class="name">${student.fullName}</div>
       <div class="id">ID: ${student.studentId} · ${student.group}</div>
       <img class="qr" src="${url}" alt="QR" />
-      <div class="id">Sport Academy · Attendance QR Code</div>
+      <div class="id">Rovy Swimming Academy · Attendance QR Code</div>
       </div></body></html>`);
     pw.document.close();
     setTimeout(() => { pw.print(); pw.close(); }, 250);

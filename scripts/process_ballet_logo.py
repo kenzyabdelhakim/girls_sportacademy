@@ -1,4 +1,4 @@
-"""Process the ballet-dancers logo PNG into web-ready assets for Sport Academy.
+"""Process the ballet-dancers logo PNG into web-ready assets for Rovy Swimming Academy.
 
 The source is already a clean transparent PNG (silhouette art), so this just
 crops to content, produces a white-recolored variant for dark/pink

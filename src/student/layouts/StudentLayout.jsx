@@ -146,8 +146,8 @@ const StudentLayout = ({ children }) => {
                   exit={{ opacity: 0, x: -10 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <p className="font-black text-sm leading-none tracking-tight" style={{ color: 'var(--text-primary)' }}>SPORT ACADEMY</p>
-                  <p className="font-black text-sm leading-none tracking-tight mt-0.5" style={{ color: '#DB2777' }}>{t('nav.studentPortal')}</p>
+                  <p className="font-black text-[10px] leading-none tracking-wider" style={{ color: 'var(--text-muted)' }}>ROVY SWIMMING ACADEMY</p>
+                  <p className="font-black text-sm leading-none tracking-tight mt-1" style={{ color: '#DB2777' }}>{t('nav.studentPortal')}</p>
                 </motion.div>
               )}
             </AnimatePresence>

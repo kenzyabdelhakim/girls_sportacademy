@@ -1,11 +1,11 @@
-// Central translation dictionaries for Sport Academy.
+// Central translation dictionaries for Rovy Swimming Academy.
 // Keys are referenced via t('section.key'). Missing Arabic keys fall back
 // to English automatically (see LanguageContext).
 
 export const translations = {
   en: {
     common: {
-      appName: 'Sport Academy',
+      appName: 'Rovy Swimming Academy',
       loading: 'Loading…',
       save: 'Save',
       cancel: 'Cancel',
@@ -87,7 +87,7 @@ export const translations = {
       authenticating: 'Authenticating…',
       adminNote: 'Admin access only. Students should use the',
       studentPortalLink: 'Student Portal',
-      rights: '© 2025 Sport Academy. All rights reserved.',
+      rights: '© 2025 Rovy Swimming Academy. All rights reserved.',
       brandTagline: 'Attendance, athletes, and training materials — all in one place.',
       brandKicker: 'Academy Management',
       welcome: 'Welcome back',
@@ -102,7 +102,7 @@ export const translations = {
     },
     studentLogin: {
       title: 'Student Portal',
-      subtitle: 'Sport Academy Attendance System',
+      subtitle: 'Rovy Swimming Academy Attendance System',
       welcome: 'Welcome back',
       brandTagline: 'Track your attendance and unlock your training materials.',
     },
@@ -420,7 +420,7 @@ export const translations = {
 
   ar: {
     common: {
-      appName: 'أكاديمية رياضية',
+      appName: 'أكاديمية روفي للسباحة',
       loading: 'جارٍ التحميل…',
       save: 'حفظ',
       cancel: 'إلغاء',
@@ -502,7 +502,7 @@ export const translations = {
       authenticating: 'جارٍ المصادقة…',
       adminNote: 'الدخول للمشرفين فقط. على الطلاب استخدام',
       studentPortalLink: 'بوابة الطالب',
-      rights: '© 2025 أكاديمية رياضية. جميع الحقوق محفوظة.',
+      rights: '© 2025 أكاديمية روفي للسباحة. جميع الحقوق محفوظة.',
       brandTagline: 'الحضور واللاعبون ومواد التدريب — كل ذلك في مكان واحد.',
       brandKicker: 'إدارة الأكاديمية',
       welcome: 'مرحبًا بعودتك',
@@ -517,7 +517,7 @@ export const translations = {
     },
     studentLogin: {
       title: 'بوابة الطالب',
-      subtitle: 'نظام حضور الأكاديمية الرياضية',
+      subtitle: 'نظام حضور أكاديمية روفي للسباحة',
       welcome: 'مرحبًا بعودتك',
       brandTagline: 'تابع حضورك واطّلع على مواد تدريبك.',
     },
