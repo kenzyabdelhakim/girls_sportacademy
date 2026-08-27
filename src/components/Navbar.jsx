@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -18,6 +18,8 @@ import {
   Sun,
   Moon,
   Languages,
+  Pencil,
+  Loader2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Logo from './Logo';
@@ -141,12 +143,115 @@ const LangToggle = ({ collapsed }) => {
   );
 };
 
+/* ── Admin name: label + edit modal ── */
+// Falls back to the email's local part until the admin sets a real name.
+const adminLabel = (displayName, currentUser) =>
+  displayName || currentUser?.email?.split('@')[0] || '';
+
+const AdminNameModal = ({ open, onClose }) => {
+  const { currentUser, displayName, updateDisplayName } = useAuth();
+  const { t } = useLang();
+  const [value, setValue] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  // Seed the field with the current name each time the modal opens.
+  useEffect(() => {
+    if (open) setValue(displayName || '');
+  }, [open, displayName]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!value.trim()) { toast.error(t('common.nameRequired')); return; }
+    setSaving(true);
+    try {
+      await updateDisplayName(value);
+      toast.success(t('common.nameUpdated'));
+      onClose();
+    } catch {
+      toast.error(t('common.nameUpdateFailed'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0"
+            style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}
+            onClick={saving ? undefined : onClose}
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.92, y: 20 }}
+            transition={{ type: 'spring', damping: 30, stiffness: 350 }}
+            className="modal-bg relative w-full max-w-sm rounded-2xl"
+            style={{ border: '1px solid var(--border)' }}
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h2 className="text-lg font-black" style={{ color: 'var(--text-primary)' }}>{t('common.yourName')}</h2>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{currentUser?.email}</p>
+                </div>
+                <button onClick={onClose} className="btn-secondary w-9 h-9 p-0 rounded-xl" disabled={saving}>
+                  <X size={16} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="label">{t('common.displayNameLabel')}</label>
+                  <input
+                    type="text"
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                    placeholder={t('common.namePlaceholder')}
+                    className="input-field"
+                    maxLength={60}
+                    autoFocus
+                  />
+                  <p className="text-xs mt-1.5" style={{ color: 'var(--text-muted)' }}>{t('common.displayNameHint')}</p>
+                </div>
+
+                <div className="flex gap-3 pt-1">
+                  <button type="button" onClick={onClose} className="flex-1 btn-secondary" disabled={saving}>
+                    {t('common.cancel')}
+                  </button>
+                  <motion.button
+                    type="submit"
+                    className="flex-1 btn-primary"
+                    disabled={saving}
+                    whileHover={{ scale: saving ? 1 : 1.02 }}
+                    whileTap={{ scale: saving ? 1 : 0.98 }}
+                  >
+                    {saving
+                      ? <><Loader2 size={16} className="animate-spin" /> {t('common.saving')}</>
+                      : t('common.save')}
+                  </motion.button>
+                </div>
+              </form>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+};
+
 /* ═══════════════════════════════════════════
    Desktop Sidebar
 ═══════════════════════════════════════════ */
 const Sidebar = ({ collapsed, onToggle }) => {
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout, displayName } = useAuth();
   const { t } = useLang();
+  const [editingName, setEditingName] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const isActive = (path) => location.pathname === path;
@@ -162,6 +267,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
   };
 
   return (
+    <>
     <motion.aside
       initial={false}
       animate={{ width: collapsed ? 72 : 240 }}
@@ -201,23 +307,34 @@ const Sidebar = ({ collapsed, onToggle }) => {
         <LangToggle collapsed={collapsed} />
         <ThemeToggle collapsed={collapsed} />
 
-        {/* User info */}
-        <div className="flex items-center gap-3 px-2 py-2">
+        {/* User info — click to rename */}
+        <motion.button
+          onClick={() => setEditingName(true)}
+          whileTap={{ scale: 0.97 }}
+          className="group w-full flex items-center gap-3 px-2 py-2 rounded-xl transition-all"
+          style={{ background: 'transparent' }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface)')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+          title={t('common.editName')}
+        >
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold"
             style={{ background: 'linear-gradient(135deg, #DB2777, #F9A8D4)', color: '#fff' }}
           >
-            {currentUser?.email?.[0]?.toUpperCase() || 'A'}
+            {adminLabel(displayName, currentUser)[0]?.toUpperCase() || 'A'}
           </div>
           <AnimatePresence>
             {!collapsed && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 min-w-0">
-                <p className="text-xs font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{currentUser?.email?.split('@')[0]}</p>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 min-w-0 text-start">
+                <p className="text-xs font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{adminLabel(displayName, currentUser)}</p>
                 <p className="text-xs" style={{ color: '#EC4899' }}>{t('common.admin')}</p>
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+          {!collapsed && (
+            <Pencil size={13} className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--text-muted)' }} />
+          )}
+        </motion.button>
 
         {/* Logout */}
         <motion.button
@@ -252,7 +369,11 @@ const Sidebar = ({ collapsed, onToggle }) => {
           {collapsed ? <ChevronRight size={16} style={{ color: 'var(--text-muted)' }} /> : <ChevronLeft size={16} style={{ color: 'var(--text-muted)' }} />}
         </motion.button>
       </div>
+
     </motion.aside>
+
+    <AdminNameModal open={editingName} onClose={() => setEditingName(false)} />
+    </>
   );
 };
 
@@ -260,12 +381,13 @@ const Sidebar = ({ collapsed, onToggle }) => {
    Mobile top bar + drawer
 ═══════════════════════════════════════════ */
 export const MobileNav = () => {
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout, displayName } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const { isDark, toggleTheme } = useTheme();
   const { t, toggleLang, isRTL } = useLang();
   const [open, setOpen] = useState(false);
+  const [editingName, setEditingName] = useState(false);
   const isActive = (path) => location.pathname === path;
 
   const handleLogout = async () => {
@@ -374,15 +496,20 @@ export const MobileNav = () => {
               </nav>
 
               <div className="p-4 space-y-3" style={{ borderTop: '1px solid var(--border)' }}>
-                <div className="flex items-center gap-3 px-2 mb-2">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: 'linear-gradient(135deg, #DB2777, #F9A8D4)', color: '#fff' }}>
-                    {currentUser?.email?.[0]?.toUpperCase()}
+                <button
+                  onClick={() => { setOpen(false); setEditingName(true); }}
+                  className="w-full flex items-center gap-3 px-2 py-2 mb-2 rounded-xl"
+                  style={{ background: 'var(--bg-surface)' }}
+                >
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0" style={{ background: 'linear-gradient(135deg, #DB2777, #F9A8D4)', color: '#fff' }}>
+                    {adminLabel(displayName, currentUser)[0]?.toUpperCase() || 'A'}
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{currentUser?.email?.split('@')[0]}</p>
+                  <div className="flex-1 min-w-0 text-start">
+                    <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{adminLabel(displayName, currentUser)}</p>
                     <p className="text-xs" style={{ color: '#EC4899' }}>{t('common.admin')}</p>
                   </div>
-                </div>
+                  <Pencil size={14} className="flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
+                </button>
                 <button
                   onClick={toggleLang}
                   className="w-full flex items-center gap-3 py-2.5 px-3 rounded-xl btn-secondary"
@@ -405,6 +532,8 @@ export const MobileNav = () => {
           </>
         )}
       </AnimatePresence>
+
+      <AdminNameModal open={editingName} onClose={() => setEditingName(false)} />
     </>
   );
 };

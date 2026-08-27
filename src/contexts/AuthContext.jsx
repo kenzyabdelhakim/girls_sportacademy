@@ -3,6 +3,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  updateProfile,
 } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
@@ -19,6 +20,9 @@ export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  // Mirrors auth.currentUser.displayName. Kept in state because Firebase
+  // mutates the user object in place, which never re-renders consumers.
+  const [displayName, setDisplayName] = useState('');
 
   const login = async (email, password) => {
     const credential = await signInWithEmailAndPassword(auth, email, password);
@@ -30,13 +34,25 @@ export const AuthProvider = ({ children }) => {
     }
     setCurrentUser(credential.user);
     setIsAdmin(true);
+    setDisplayName(credential.user.displayName || '');
     return credential;
   };
 
   const logout = async () => {
     setCurrentUser(null);
     setIsAdmin(false);
+    setDisplayName('');
     return signOut(auth);
+  };
+
+  // Persists the admin's chosen name on their Firebase Auth profile, so it
+  // follows them across devices without needing a Firestore collection.
+  const updateDisplayName = async (name) => {
+    const user = auth?.currentUser;
+    if (!user) throw new Error('not_signed_in');
+    const trimmed = name.trim();
+    await updateProfile(user, { displayName: trimmed });
+    setDisplayName(trimmed);
   };
 
   useEffect(() => {
@@ -46,6 +62,7 @@ export const AuthProvider = ({ children }) => {
       if (!user) {
         setCurrentUser(null);
         setIsAdmin(false);
+        setDisplayName('');
         setLoading(false);
         return;
       }
@@ -57,14 +74,17 @@ export const AuthProvider = ({ children }) => {
           // The StudentAuthContext handles student sessions independently.
           setCurrentUser(null);
           setIsAdmin(false);
+          setDisplayName('');
         } else {
           setCurrentUser(user);
           setIsAdmin(true);
+          setDisplayName(user.displayName || '');
         }
       } catch {
         // Firestore error — give benefit of doubt, treat as admin
         setCurrentUser(user);
         setIsAdmin(true);
+        setDisplayName(user.displayName || '');
       }
 
       setLoading(false);
@@ -74,7 +94,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ currentUser, isAdmin, login, logout, loading }}>
+    <AuthContext.Provider value={{ currentUser, isAdmin, login, logout, loading, displayName, updateDisplayName }}>
       {!loading && children}
     </AuthContext.Provider>
   );
