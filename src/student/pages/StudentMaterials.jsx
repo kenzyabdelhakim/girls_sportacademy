@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useStudentAuth } from '../contexts/StudentAuthContext';
-import { getStudentSessionMaterials } from '../services/sessionMaterialsService';
+import { getStudentSessionMaterials, driveThumbnailUrl } from '../services/sessionMaterialsService';
 import MaterialCover from '../../components/MaterialCover';
 import { motion } from 'framer-motion';
 import {
@@ -178,7 +178,7 @@ const StudentMaterials = () => {
               >
                 <div className="p-3 pb-0 relative">
                   <MaterialCover
-                    imageUrl={material.imageUrl}
+                    imageUrl={material.imageUrl || driveThumbnailUrl(material.link)}
                     materialType={material.materialType || 'other'}
                     alt={material.title}
                   />

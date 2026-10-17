@@ -24,9 +24,10 @@ import {
   updateSessionMaterial,
   deleteSessionMaterial,
   normaliseGroups,
-  uploadMaterialImage,
+  materialImageToDataUrl,
   deleteMaterialImageFile,
   validateMaterialImageFile,
+  driveThumbnailUrl,
   MAX_MATERIAL_IMAGE_BYTES,
 } from '../student/services/sessionMaterialsService';
 import { getAllStudents } from '../services/studentService';
@@ -65,6 +66,7 @@ const TYPE_ICONS = {
 const SessionMaterials = () => {
   const { t } = useLang();
   const fileInputRef = useRef(null);
+  const cardInputRef = useRef(null);
   const [materials, setMaterials] = useState([]);
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -77,6 +79,8 @@ const SessionMaterials = () => {
   const [removeExistingImage, setRemoveExistingImage] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [imageError, setImageError] = useState('');
+  const [uploadTarget, setUploadTarget] = useState(null);
+  const [cardUpload, setCardUpload] = useState({ id: null, progress: 0 });
 
   useEffect(() => { loadData(); }, []);
 
@@ -206,21 +210,15 @@ const SessionMaterials = () => {
     setSubmitting(true);
     setUploadProgress(0);
 
-    let uploadedPath = null;
     try {
       let imageUrl = removeExistingImage ? '' : (formData.imageUrl || '');
       let imagePath = removeExistingImage ? '' : (formData.imagePath || '');
       const previousPath = editingMaterial?.imagePath || formData.imagePath || '';
 
       if (imageFile) {
-        const uploaded = await uploadMaterialImage(
-          imageFile,
-          editingMaterial?.id,
-          setUploadProgress
-        );
-        imageUrl = uploaded.imageUrl;
-        imagePath = uploaded.imagePath;
-        uploadedPath = uploaded.imagePath;
+        const converted = await materialImageToDataUrl(imageFile);
+        imageUrl = converted.imageUrl;
+        imagePath = converted.imagePath;
       }
 
       const payload = {
@@ -231,7 +229,7 @@ const SessionMaterials = () => {
 
       if (editingMaterial) {
         await updateSessionMaterial(editingMaterial.id, payload);
-        if ((imageFile || removeExistingImage) && previousPath && previousPath !== imagePath) {
+        if ((imageFile || removeExistingImage) && previousPath) {
           await deleteMaterialImageFile(previousPath);
         }
         toast.success(t('materials.updated'));
@@ -242,19 +240,11 @@ const SessionMaterials = () => {
       closeModal();
       loadData();
     } catch (err) {
-      if (uploadedPath) await deleteMaterialImageFile(uploadedPath);
       const code = err?.code || err?.message;
       if (code === 'tooLarge') {
         toast.error(t('materials.imageTooLarge', { mb: 5 }));
       } else if (code === 'invalidType') {
         toast.error(t('materials.imageInvalidType'));
-      } else if (
-        code === 'storageUnavailable' ||
-        code === 'storage/unauthorized' ||
-        code === 'storage/retry-limit-exceeded' ||
-        code === 'storage/unknown'
-      ) {
-        toast.error(t('materials.imageUploadFailed'));
       } else {
         toast.error(editingMaterial ? t('materials.failedUpdate') : t('materials.failedAdd'));
       }
@@ -276,6 +266,60 @@ const SessionMaterials = () => {
     }
   };
 
+  // One-click cover image add/change straight from a card — no modal detour.
+  const pickCardImage = (material) => {
+    setUploadTarget(material);
+    if (cardInputRef.current) cardInputRef.current.value = '';
+    cardInputRef.current?.click();
+  };
+
+  const handleCardImageSelected = async (e) => {
+    const file = e.target.files?.[0];
+    const material = uploadTarget;
+    if (cardInputRef.current) cardInputRef.current.value = '';
+    if (!file || !material) return;
+
+    const validation = validateMaterialImageFile(file);
+    if (!validation.ok) {
+      const msg =
+        validation.error === 'tooLarge'
+          ? t('materials.imageTooLarge', { mb: Math.round(MAX_MATERIAL_IMAGE_BYTES / (1024 * 1024)) })
+          : t('materials.imageInvalidType');
+      toast.error(msg);
+      return;
+    }
+
+    const previousPath = material.imagePath || '';
+    setCardUpload({ id: material.id, progress: 0 });
+    try {
+      const uploaded = await materialImageToDataUrl(file);
+      await updateSessionMaterial(material.id, {
+        ...material,
+        groups: normaliseGroups(material),
+        imageUrl: uploaded.imageUrl,
+        imagePath: uploaded.imagePath,
+      });
+      if (previousPath) {
+        await deleteMaterialImageFile(previousPath);
+      }
+      toast.success(t('materials.imageUpdated'));
+      loadData();
+    } catch (err) {
+      const code = err?.code || err?.message;
+      if (code === 'tooLarge') {
+        toast.error(t('materials.imageTooLarge', { mb: 5 }));
+      } else if (code === 'invalidType') {
+        toast.error(t('materials.imageInvalidType'));
+      } else {
+        toast.error(t('materials.failedUpdate'));
+      }
+      console.error('[SessionMaterials] card image update failed:', err);
+    } finally {
+      setCardUpload({ id: null, progress: 0 });
+      setUploadTarget(null);
+    }
+  };
+
   const typeLabel = (type) => {
     if (type === 'lecture') return t('materials.typeLecture');
     if (type === 'skill') return t('materials.typeSkill');
@@ -288,6 +332,15 @@ const SessionMaterials = () => {
 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
+      {/* Hidden input for one-click card image add/change */}
+      <input
+        ref={cardInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        className="hidden"
+        onChange={handleCardImageSelected}
+      />
+
       {/* Header */}
       <motion.div variants={cardVariants} className="flex items-start justify-between gap-4">
         <div>
@@ -333,6 +386,8 @@ const SessionMaterials = () => {
           {materials.map((material) => {
             const materialGroups = normaliseGroups(material);
             const TypeIcon = TYPE_ICONS[material.materialType] || Sparkles;
+            // Manual photo first; otherwise preview frame straight from the Drive video.
+            const coverUrl = material.imageUrl || driveThumbnailUrl(material.link);
             return (
               <motion.div
                 key={material.id}
@@ -341,14 +396,43 @@ const SessionMaterials = () => {
                 className="glass-card overflow-hidden transition-all flex flex-col h-full"
               >
                 <div className="p-3 pb-0">
-                  <MaterialCover
-                    imageUrl={material.imageUrl}
-                    materialType={material.materialType || 'other'}
-                    alt={material.title}
-                    showUploadHint={!material.imageUrl}
-                    uploadHintLabel={t('materials.addImage')}
-                    onUploadClick={() => openEditModal(material)}
-                  />
+                  <div className="relative group/cover">
+                    <MaterialCover
+                      imageUrl={coverUrl}
+                      materialType={material.materialType || 'other'}
+                      alt={material.title}
+                      showUploadHint={!coverUrl}
+                      uploadHintLabel={t('materials.addImage')}
+                      onUploadClick={() => pickCardImage(material)}
+                      failedHint={t('materials.imageLoadFailed')}
+                    />
+                    {coverUrl && cardUpload.id !== material.id && (
+                      <button
+                        type="button"
+                        onClick={() => pickCardImage(material)}
+                        className="absolute top-2 end-2 flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg opacity-0 group-hover/cover:opacity-100 transition-opacity"
+                        style={{
+                          background: 'rgba(255,255,255,0.92)',
+                          color: '#DB2777',
+                          border: '1px solid rgba(219,39,119,0.25)',
+                          boxShadow: '0 2px 10px rgba(219,39,119,0.18)',
+                        }}
+                      >
+                        <Replace size={12} /> {t('materials.changeImage')}
+                      </button>
+                    )}
+                    {cardUpload.id === material.id && (
+                      <div
+                        className="absolute inset-0 rounded-xl flex flex-col items-center justify-center gap-2"
+                        style={{ background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(4px)' }}
+                      >
+                        <Loader2 size={22} className="animate-spin" style={{ color: '#DB2777' }} />
+                        <span className="text-[11px] font-bold" style={{ color: '#DB2777' }}>
+                          {t('materials.uploadingImage')}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="p-5 pt-3 flex flex-col flex-1">

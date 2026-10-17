@@ -22,6 +22,8 @@ const TYPE_META = {
 /**
  * 16:9 material cover with object-fit cover, load-error fallback,
  * and an attractive type-based placeholder when no image is set.
+ * When an imageUrl exists but fails to load, the placeholder carries a
+ * visible failedHint so it never silently looks like no image was set.
  */
 const MaterialCover = ({
   imageUrl,
@@ -30,12 +32,14 @@ const MaterialCover = ({
   showUploadHint = false,
   uploadHintLabel = 'Add image',
   onUploadClick,
+  failedHint = '',
   className = '',
 }) => {
   const [failed, setFailed] = useState(false);
   const meta = TYPE_META[materialType] || TYPE_META.other;
   const { Icon } = meta;
   const showImage = Boolean(imageUrl) && !failed;
+  const showFailedHint = Boolean(imageUrl) && failed && Boolean(failedHint);
 
   useEffect(() => {
     setFailed(false);
@@ -63,6 +67,11 @@ const MaterialCover = ({
           >
             <Icon size={24} style={{ color: meta.iconColor }} />
           </div>
+          {showFailedHint && (
+            <p className="text-[11px] font-semibold text-center leading-snug" style={{ color: meta.iconColor }}>
+              {failedHint}
+            </p>
+          )}
           {showUploadHint && (
             <button
               type="button"

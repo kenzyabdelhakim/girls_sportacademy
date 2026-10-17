@@ -9,20 +9,31 @@ import {
   deleteDoc,
   doc,
 } from 'firebase/firestore';
-import {
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-  deleteObject,
-} from 'firebase/storage';
+import { ref, deleteObject } from 'firebase/storage';
 import { db, storage } from '../../firebase/config';
 
 const MATERIALS_COLLECTION = 'session_materials';
 const ATTENDANCE_COLLECTION = 'attendance';
 
 export const MATERIAL_TYPES = ['lecture', 'skill', 'other'];
-export const MAX_MATERIAL_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
+export const MAX_MATERIAL_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB input file
 export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+// Inline cover images are downscaled to fit comfortably inside a Firestore doc
+// (1 MB limit) without needing Firebase Storage at all.
+const MAX_IMAGE_DIMENSION = 960;
+const INITIAL_JPEG_QUALITY = 0.8;
+const MIN_JPEG_QUALITY = 0.3;
+const MAX_DATAURL_CHARS = 900 * 1024;
+
+/**
+ * Public Google Drive thumbnail for a Drive file link, so video materials get
+ * an automatic preview frame from the video itself. Returns '' for non-Drive links.
+ */
+export const driveThumbnailUrl = (link, width = 800) => {
+  const m = /drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?.*?id=)([\w-]{10,})/.exec(String(link || ''));
+  return m ? `https://drive.google.com/thumbnail?id=${m[1]}&sz=w${width}` : '';
+};
 
 // Normalise a material's group fields into a consistent array
 const normaliseGroups = (material) => {
@@ -59,55 +70,60 @@ export const validateMaterialImageFile = (file) => {
 };
 
 /**
- * Upload a material cover image to Firebase Storage.
- * Returns a persistent download URL (not a local blob URL).
+ * Convert an image file into a downscaled JPEG data URL that is stored inline
+ * on the material document. This keeps "add photo" working regardless of
+ * Firebase Storage availability, and displays everywhere the material does.
  */
-export const uploadMaterialImage = (file, materialId, onProgress) =>
+export const materialImageToDataUrl = (file) =>
   new Promise((resolve, reject) => {
     const validation = validateMaterialImageFile(file);
     if (!validation.ok) {
       reject(new Error(validation.error));
       return;
     }
-    if (!storage) {
-      reject(new Error('storageUnavailable'));
-      return;
-    }
 
-    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
-    const safeId = materialId || `draft_${Date.now()}`;
-    const path = `session_materials/${safeId}/${Date.now()}.${ext}`;
-    const storageRef = ref(storage, path);
-    const task = uploadBytesResumable(storageRef, file, {
-      contentType: file.type,
-      cacheControl: 'public,max-age=31536000',
-    });
-
-    task.on(
-      'state_changed',
-      (snapshot) => {
-        if (typeof onProgress === 'function' && snapshot.totalBytes > 0) {
-          onProgress(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100));
-        }
-      },
-      (error) => reject(error),
-      async () => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('invalidType'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('invalidType'));
+      img.onload = () => {
         try {
-          const imageUrl = await getDownloadURL(task.snapshot.ref);
-          resolve({ imageUrl, imagePath: path });
+          const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(img.width, img.height));
+          const w = Math.max(1, Math.round(img.width * scale));
+          const h = Math.max(1, Math.round(img.height * scale));
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+
+          let quality = INITIAL_JPEG_QUALITY;
+          let dataUrl = canvas.toDataURL('image/jpeg', quality);
+          while (dataUrl.length > MAX_DATAURL_CHARS && quality > MIN_JPEG_QUALITY) {
+            quality -= 0.15;
+            dataUrl = canvas.toDataURL('image/jpeg', quality);
+          }
+          if (dataUrl.length > MAX_DATAURL_CHARS) {
+            reject(new Error('tooLarge'));
+            return;
+          }
+          resolve({ imageUrl: dataUrl, imagePath: '' });
         } catch (err) {
           reject(err);
         }
-      }
-    );
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
   });
 
 export const deleteMaterialImageFile = async (imagePath) => {
-  if (!imagePath) return;
+  // Covers are now stored inline on the document; only legacy Storage paths
+  // (from older uploads) would need cleanup, so this is a safe no-op otherwise.
+  if (!imagePath || imagePath.startsWith('data:')) return;
   try {
     await deleteObject(ref(storage, imagePath));
   } catch (error) {
-    // Ignore missing files so edits/deletes still succeed
     if (error?.code !== 'storage/object-not-found') {
       console.warn('[sessionMaterialsService] Failed to delete image:', error);
     }
