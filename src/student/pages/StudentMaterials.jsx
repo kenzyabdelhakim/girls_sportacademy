@@ -40,6 +40,16 @@ const StudentMaterials = () => {
   const [materials, setMaterials] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [expandedDescriptions, setExpandedDescriptions] = useState(() => new Set());
+
+  const toggleDescription = (id) => {
+    setExpandedDescriptions((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   // Derived — no separate state needed, avoids timing gap between materials and filteredMaterials
   const filteredMaterials = searchTerm.trim()
@@ -214,9 +224,32 @@ const StudentMaterials = () => {
                   <h3 className="font-bold mb-2 line-clamp-2" style={{ color: 'var(--text-primary)' }}>
                     {material.title}
                   </h3>
-                  <p className="text-sm mb-3 line-clamp-2 min-h-[2.5rem] flex-1" style={{ color: 'var(--text-muted)' }}>
-                    {material.description || '\u00A0'}
-                  </p>
+                  {material.description ? (
+                    <div className="mb-3 flex-1">
+                      <p
+                        className={`text-[13.5px] leading-relaxed font-medium mb-0.5 ${expandedDescriptions.has(material.id) ? '' : 'line-clamp-3'}`}
+                        style={{ color: 'var(--text-primary)', opacity: 0.85 }}
+                      >
+                        {material.description}
+                      </p>
+                      {material.description.length > 110 && (
+                        <button
+                          type="button"
+                          onClick={() => toggleDescription(material.id)}
+                          className="text-xs font-bold transition-colors"
+                          style={{ color: '#DB2777' }}
+                        >
+                          {expandedDescriptions.has(material.id)
+                            ? t('materials.showLess')
+                            : t('materials.showMore')}
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-[13.5px] mb-3 min-h-[2.5rem] flex-1" style={{ color: 'var(--text-muted)' }}>
+                      {'\u00A0'}
+                    </p>
+                  )}
 
                   <div className="mb-4">
                     <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
