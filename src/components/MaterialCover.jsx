@@ -90,7 +90,7 @@ const MaterialCover = ({
           {showUploadHint && (
             <button
               type="button"
-              onClick={onUploadClick}
+              onClick={(e) => { e.stopPropagation(); onUploadClick && onUploadClick(); }}
               className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
               style={{
                 background: 'rgba(255,255,255,0.8)',

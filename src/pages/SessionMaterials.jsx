@@ -17,6 +17,7 @@ import {
   Upload,
   Award,
   Sparkles,
+  PlayCircle,
 } from 'lucide-react';
 import {
   getAllSessionMaterials,
@@ -33,6 +34,7 @@ import {
 import { getAllStudents } from '../services/studentService';
 import MaterialCover from '../components/MaterialCover';
 import MaterialQr from '../components/MaterialQr';
+import MaterialViewer from '../components/MaterialViewer';
 import toast from 'react-hot-toast';
 import { useLang } from '../contexts/LanguageContext';
 
@@ -83,6 +85,7 @@ const SessionMaterials = () => {
   const [uploadTarget, setUploadTarget] = useState(null);
   const [cardUpload, setCardUpload] = useState({ id: null, progress: 0 });
   const [expandedDescriptions, setExpandedDescriptions] = useState(() => new Set());
+  const [viewing, setViewing] = useState(null);
 
   const toggleDescription = (id) => {
     setExpandedDescriptions((prev) => {
@@ -407,7 +410,10 @@ const SessionMaterials = () => {
                 className="glass-card overflow-hidden transition-all flex flex-col h-full"
               >
                 <div className="p-3 pb-0">
-                  <div className="relative group/cover">
+                  <div
+                    className="relative group/cover cursor-pointer"
+                    onClick={() => setViewing(material)}
+                  >
                     <MaterialCover
                       imageUrl={coverUrl}
                       materialType={material.materialType || 'other'}
@@ -417,10 +423,23 @@ const SessionMaterials = () => {
                       onUploadClick={() => pickCardImage(material)}
                       failedHint={t('materials.imageLoadFailed')}
                     />
+                    {coverUrl && (
+                      <div
+                        className="absolute inset-0 rounded-xl hidden group-hover/cover:flex items-center justify-center pointer-events-none transition-all"
+                        style={{ background: 'rgba(0,0,0,0.22)' }}
+                      >
+                        <div
+                          className="w-12 h-12 rounded-full flex items-center justify-center"
+                          style={{ background: 'rgba(255,255,255,0.92)', boxShadow: '0 4px 18px rgba(0,0,0,0.25)' }}
+                        >
+                          <PlayCircle size={26} style={{ color: '#DB2777' }} />
+                        </div>
+                      </div>
+                    )}
                     {coverUrl && cardUpload.id !== material.id && (
                       <button
                         type="button"
-                        onClick={() => pickCardImage(material)}
+                        onClick={(e) => { e.stopPropagation(); pickCardImage(material); }}
                         className="absolute top-2 end-2 flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg opacity-0 group-hover/cover:opacity-100 transition-opacity"
                         style={{
                           background: 'rgba(255,255,255,0.92)',
@@ -434,7 +453,7 @@ const SessionMaterials = () => {
                     )}
                     {cardUpload.id === material.id && (
                       <div
-                        className="absolute inset-0 rounded-xl flex flex-col items-center justify-center gap-2"
+                        className="absolute inset-0 rounded-xl flex flex-col items-center justify-center gap-2 pointer-events-none"
                         style={{ background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(4px)' }}
                       >
                         <Loader2 size={22} className="animate-spin" style={{ color: '#DB2777' }} />
@@ -559,6 +578,11 @@ const SessionMaterials = () => {
             );
           })}
         </motion.div>
+      )}
+
+      {/* Media viewer — full lesson image + playable video */}
+      {viewing && (
+        <MaterialViewer material={viewing} onClose={() => setViewing(null)} />
       )}
 
       {/* Add / Edit Modal */}

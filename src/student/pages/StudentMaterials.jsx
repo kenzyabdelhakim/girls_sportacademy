@@ -3,6 +3,7 @@ import { useStudentAuth } from '../contexts/StudentAuthContext';
 import { getStudentSessionMaterials, driveThumbnailUrl } from '../services/sessionMaterialsService';
 import MaterialCover from '../../components/MaterialCover';
 import MaterialQr from '../../components/MaterialQr';
+import MaterialViewer from '../../components/MaterialViewer';
 import { motion } from 'framer-motion';
 import {
   BookOpen,
@@ -15,6 +16,7 @@ import {
   RefreshCw,
   Award,
   Sparkles,
+  PlayCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLang } from '../../contexts/LanguageContext';
@@ -42,6 +44,7 @@ const StudentMaterials = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedDescriptions, setExpandedDescriptions] = useState(() => new Set());
+  const [viewing, setViewing] = useState(null);
 
   const toggleDescription = (id) => {
     setExpandedDescriptions((prev) => {
@@ -187,12 +190,34 @@ const StudentMaterials = () => {
                 className="glass-card overflow-hidden flex flex-col h-full transition-all"
                 style={{ opacity: material.hasAccess ? 1 : 0.7 }}
               >
-                <div className="p-3 pb-0 relative">
+                <div
+                  className={`p-3 pb-0 relative group/cover ${material.hasAccess ? 'cursor-pointer' : ''}`}
+                  onClick={() => {
+                    if (!material.hasAccess) {
+                      toast.error(t('student.attendToUnlockToast'));
+                      return;
+                    }
+                    setViewing(material);
+                  }}
+                >
                   <MaterialCover
                     imageUrl={material.imageUrl || driveThumbnailUrl(material.link)}
                     materialType={material.materialType || 'other'}
                     alt={material.title}
                   />
+                  {material.hasAccess && (
+                    <div
+                      className="absolute inset-3 rounded-xl hidden group-hover/cover:flex items-center justify-center pointer-events-none transition-all"
+                      style={{ background: 'rgba(0,0,0,0.22)' }}
+                    >
+                      <div
+                        className="w-12 h-12 rounded-full flex items-center justify-center"
+                        style={{ background: 'rgba(255,255,255,0.92)', boxShadow: '0 4px 18px rgba(0,0,0,0.25)' }}
+                      >
+                        <PlayCircle size={26} style={{ color: '#DB2777' }} />
+                      </div>
+                    </div>
+                  )}
                   {!material.hasAccess && (
                     <div
                       className="absolute inset-3 rounded-xl flex items-center justify-center"
@@ -309,6 +334,10 @@ const StudentMaterials = () => {
           <li>{t('student.matInfo4')}</li>
         </ul>
       </motion.div>
+      {/* Media viewer — full lesson image + playable video */}
+      {viewing && (
+        <MaterialViewer material={viewing} onClose={() => setViewing(null)} />
+      )}
     </motion.div>
   );
 };
