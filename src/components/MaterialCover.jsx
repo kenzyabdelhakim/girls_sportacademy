@@ -22,8 +22,11 @@ const TYPE_META = {
 /**
  * 16:9 material cover with object-fit cover, load-error fallback,
  * and an attractive type-based placeholder when no image is set.
- * When an imageUrl exists but fails to load, the placeholder carries a
- * visible failedHint so it never silently looks like no image was set.
+ * - When an imageUrl exists but fails to load, the placeholder carries a
+ *   visible failedHint so it never silently looks like no image was set.
+ * - Portrait images (lesson plan scans) switch to full-page mode: shown at
+ *   their natural aspect ratio on a white background, uncropped, so the
+ *   whole lesson stays readable.
  */
 const MaterialCover = ({
   imageUrl,
@@ -36,19 +39,27 @@ const MaterialCover = ({
   className = '',
 }) => {
   const [failed, setFailed] = useState(false);
+  const [portrait, setPortrait] = useState(false);
   const meta = TYPE_META[materialType] || TYPE_META.other;
   const { Icon } = meta;
   const showImage = Boolean(imageUrl) && !failed;
   const showFailedHint = Boolean(imageUrl) && failed && Boolean(failedHint);
+  // Full-page lesson mode: portrait scans get the whole page visible.
+  const fullPage = showImage && portrait;
 
   useEffect(() => {
     setFailed(false);
+    setPortrait(false);
   }, [imageUrl]);
 
   return (
     <div
       className={`relative w-full overflow-hidden rounded-xl ${className}`}
-      style={{ aspectRatio: '16 / 9', background: meta.gradient }}
+      style={
+        fullPage
+          ? { background: '#ffffff' }
+          : { aspectRatio: '16 / 9', background: meta.gradient }
+      }
     >
       {showImage ? (
         <img
@@ -56,8 +67,12 @@ const MaterialCover = ({
           alt={alt}
           loading="lazy"
           onError={() => setFailed(true)}
-          className="absolute inset-0 w-full h-full"
-          style={{ objectFit: 'cover' }}
+          onLoad={(e) => {
+            const { naturalWidth, naturalHeight } = e.currentTarget;
+            setPortrait(naturalHeight > naturalWidth * 1.1);
+          }}
+          className={fullPage ? 'w-full h-auto block' : 'absolute inset-0 w-full h-full'}
+          style={fullPage ? { objectFit: 'contain' } : { objectFit: 'cover' }}
         />
       ) : (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4">

@@ -32,6 +32,7 @@ import {
 } from '../student/services/sessionMaterialsService';
 import { getAllStudents } from '../services/studentService';
 import MaterialCover from '../components/MaterialCover';
+import MaterialQr from '../components/MaterialQr';
 import toast from 'react-hot-toast';
 import { useLang } from '../contexts/LanguageContext';
 
@@ -539,17 +540,20 @@ const SessionMaterials = () => {
 
                   <div className="divider mt-4 mb-3" />
 
-                  <a
-                    href={material.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all"
-                    style={{ background: 'rgba(219, 39, 119,0.12)', color: '#DB2777', border: '1px solid rgba(219, 39, 119,0.2)' }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(219, 39, 119,0.22)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(219, 39, 119,0.12)'; }}
-                  >
-                    <ExternalLink size={14} /> {t('materials.openLink')}
-                  </a>
+                  <div className="flex items-center gap-3">
+                    <MaterialQr link={material.link} size={84} title={`${material.title} — QR`} />
+                    <a
+                      href={material.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                      style={{ background: 'rgba(219, 39, 119,0.12)', color: '#DB2777', border: '1px solid rgba(219, 39, 119,0.2)' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(219, 39, 119,0.22)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(219, 39, 119,0.12)'; }}
+                    >
+                      <ExternalLink size={14} /> {t('materials.openLink')}
+                    </a>
+                  </div>
                 </div>
               </motion.div>
             );

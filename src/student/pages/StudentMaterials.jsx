@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useStudentAuth } from '../contexts/StudentAuthContext';
 import { getStudentSessionMaterials, driveThumbnailUrl } from '../services/sessionMaterialsService';
 import MaterialCover from '../../components/MaterialCover';
+import MaterialQr from '../../components/MaterialQr';
 import { motion } from 'framer-motion';
 import {
   BookOpen,
@@ -258,27 +259,32 @@ const StudentMaterials = () => {
                     </div>
                   </div>
 
-                  <motion.button
-                    onClick={() => openMaterial(material)}
-                    whileHover={{ scale: material.hasAccess ? 1.02 : 1 }}
-                    whileTap={{ scale: material.hasAccess ? 0.98 : 1 }}
-                    disabled={!material.hasAccess}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all mt-auto"
-                    style={material.hasAccess ? {
-                      background: 'linear-gradient(135deg, rgba(236, 72, 153,0.15), rgba(244, 114, 182,0.15))',
-                      color: '#DB2777',
-                      border: '1px solid rgba(219, 39, 119,0.3)',
-                    } : {
-                      background: 'var(--bg-surface)',
-                      color: 'var(--text-muted)',
-                      border: '1px solid var(--border)',
-                      cursor: 'not-allowed',
-                    }}
-                  >
-                    {material.hasAccess
-                      ? <><ExternalLink size={15} /> {t('student.openMaterial')}</>
-                      : <><Lock size={15} /> {t('student.attendToUnlock')}</>}
-                  </motion.button>
+                  <div className="flex items-center gap-3 mt-auto">
+                    {material.hasAccess && (
+                      <MaterialQr link={material.link} size={84} title={`${material.title} — QR`} />
+                    )}
+                    <motion.button
+                      onClick={() => openMaterial(material)}
+                      whileHover={{ scale: material.hasAccess ? 1.02 : 1 }}
+                      whileTap={{ scale: material.hasAccess ? 0.98 : 1 }}
+                      disabled={!material.hasAccess}
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                      style={material.hasAccess ? {
+                        background: 'linear-gradient(135deg, rgba(236, 72, 153,0.15), rgba(244, 114, 182,0.15))',
+                        color: '#DB2777',
+                        border: '1px solid rgba(219, 39, 119,0.3)',
+                      } : {
+                        background: 'var(--bg-surface)',
+                        color: 'var(--text-muted)',
+                        border: '1px solid var(--border)',
+                        cursor: 'not-allowed',
+                      }}
+                    >
+                      {material.hasAccess
+                        ? <><ExternalLink size={15} /> {t('student.openMaterial')}</>
+                        : <><Lock size={15} /> {t('student.attendToUnlock')}</>}
+                    </motion.button>
+                  </div>
                 </div>
               </motion.div>
             );
