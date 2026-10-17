@@ -1,6 +1,7 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 // Firebase configuration — reads from env vars (see .env.example) with the
 // existing project values as a fallback so the app keeps working for anyone
@@ -15,12 +16,13 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-let app, auth, db;
+let app, auth, db, storage;
 
 try {
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   db = getFirestore(app);
+  storage = getStorage(app);
   console.log('✅ Firebase initialized successfully');
 } catch (error) {
   console.error('❌ Firebase initialization error:', error);
@@ -36,6 +38,6 @@ export const getSecondaryAuth = () => {
   return getAuth(secondaryApp);
 };
 
-export { auth, db };
+export { auth, db, storage };
 export default app;
 

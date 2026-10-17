@@ -9,10 +9,20 @@ import {
   deleteDoc,
   doc,
 } from 'firebase/firestore';
-import { db } from '../../firebase/config';
+import {
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+  deleteObject,
+} from 'firebase/storage';
+import { db, storage } from '../../firebase/config';
 
 const MATERIALS_COLLECTION = 'session_materials';
 const ATTENDANCE_COLLECTION = 'attendance';
+
+export const MATERIAL_TYPES = ['lecture', 'skill', 'other'];
+export const MAX_MATERIAL_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
+export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 // Normalise a material's group fields into a consistent array
 const normaliseGroups = (material) => {
@@ -21,27 +31,106 @@ const normaliseGroups = (material) => {
   return [];
 };
 
-export const addSessionMaterial = async (materialData) => {
+const sanitiseMaterialPayload = (materialData) => {
   const groups = Array.isArray(materialData.groups) ? materialData.groups : [];
-  const docRef = await addDoc(collection(db, MATERIALS_COLLECTION), {
-    ...materialData,
+  const materialType = MATERIAL_TYPES.includes(materialData.materialType)
+    ? materialData.materialType
+    : 'other';
+
+  return {
+    title: (materialData.title || '').trim(),
+    description: (materialData.description || '').trim(),
+    link: (materialData.link || '').trim(),
     groups,
-    group: groups[0] || '', // keep for backward-compat with old student queries
+    group: groups[0] || '',
+    sessionDate: materialData.sessionDate || '',
+    visibleToAttendanceOnly: Boolean(materialData.visibleToAttendanceOnly),
+    materialType,
+    imageUrl: materialData.imageUrl || '',
+    imagePath: materialData.imagePath || '',
+  };
+};
+
+export const validateMaterialImageFile = (file) => {
+  if (!file) return { ok: false, error: 'noFile' };
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) return { ok: false, error: 'invalidType' };
+  if (file.size > MAX_MATERIAL_IMAGE_BYTES) return { ok: false, error: 'tooLarge' };
+  return { ok: true };
+};
+
+/**
+ * Upload a material cover image to Firebase Storage.
+ * Returns a persistent download URL (not a local blob URL).
+ */
+export const uploadMaterialImage = (file, materialId, onProgress) =>
+  new Promise((resolve, reject) => {
+    const validation = validateMaterialImageFile(file);
+    if (!validation.ok) {
+      reject(new Error(validation.error));
+      return;
+    }
+    if (!storage) {
+      reject(new Error('storageUnavailable'));
+      return;
+    }
+
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+    const safeId = materialId || `draft_${Date.now()}`;
+    const path = `session_materials/${safeId}/${Date.now()}.${ext}`;
+    const storageRef = ref(storage, path);
+    const task = uploadBytesResumable(storageRef, file, {
+      contentType: file.type,
+      cacheControl: 'public,max-age=31536000',
+    });
+
+    task.on(
+      'state_changed',
+      (snapshot) => {
+        if (typeof onProgress === 'function' && snapshot.totalBytes > 0) {
+          onProgress(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100));
+        }
+      },
+      (error) => reject(error),
+      async () => {
+        try {
+          const imageUrl = await getDownloadURL(task.snapshot.ref);
+          resolve({ imageUrl, imagePath: path });
+        } catch (err) {
+          reject(err);
+        }
+      }
+    );
+  });
+
+export const deleteMaterialImageFile = async (imagePath) => {
+  if (!imagePath) return;
+  try {
+    await deleteObject(ref(storage, imagePath));
+  } catch (error) {
+    // Ignore missing files so edits/deletes still succeed
+    if (error?.code !== 'storage/object-not-found') {
+      console.warn('[sessionMaterialsService] Failed to delete image:', error);
+    }
+  }
+};
+
+export const addSessionMaterial = async (materialData) => {
+  const payload = sanitiseMaterialPayload(materialData);
+  const docRef = await addDoc(collection(db, MATERIALS_COLLECTION), {
+    ...payload,
     createdAt: serverTimestamp(),
   });
-  return { id: docRef.id, ...materialData, groups };
+  return { id: docRef.id, ...payload };
 };
 
 export const updateSessionMaterial = async (id, materialData) => {
-  const groups = Array.isArray(materialData.groups) ? materialData.groups : [];
-  const ref = doc(db, MATERIALS_COLLECTION, id);
-  await updateDoc(ref, {
-    ...materialData,
-    groups,
-    group: groups[0] || '',
+  const payload = sanitiseMaterialPayload(materialData);
+  const refDoc = doc(db, MATERIALS_COLLECTION, id);
+  await updateDoc(refDoc, {
+    ...payload,
     updatedAt: serverTimestamp(),
   });
-  return { id, ...materialData, groups };
+  return { id, ...payload };
 };
 
 export const getAllSessionMaterials = async () => {
@@ -105,7 +194,8 @@ export const getStudentSessionMaterials = async (studentId, studentGroup) => {
   }
 };
 
-export const deleteSessionMaterial = async (materialId) => {
+export const deleteSessionMaterial = async (materialId, imagePath) => {
+  if (imagePath) await deleteMaterialImageFile(imagePath);
   await deleteDoc(doc(db, MATERIALS_COLLECTION, materialId));
 };
 

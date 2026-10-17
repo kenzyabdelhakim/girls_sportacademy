@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useStudentAuth } from '../contexts/StudentAuthContext';
 import { getStudentSessionMaterials } from '../services/sessionMaterialsService';
+import MaterialCover from '../../components/MaterialCover';
 import { motion } from 'framer-motion';
 import {
   BookOpen,
@@ -9,9 +10,10 @@ import {
   Lock,
   CheckCircle,
   Search,
-  FileText,
   Users,
   RefreshCw,
+  Award,
+  Sparkles,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLang } from '../../contexts/LanguageContext';
@@ -24,6 +26,12 @@ const containerVariants = {
 const cardVariants = {
   hidden: { opacity: 0, y: 16 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
+};
+
+const TYPE_ICONS = {
+  lecture: BookOpen,
+  skill: Award,
+  other: Sparkles,
 };
 
 const StudentMaterials = () => {
@@ -40,7 +48,8 @@ const StudentMaterials = () => {
         return (
           m.title?.toLowerCase().includes(s) ||
           m.description?.toLowerCase().includes(s) ||
-          m.sessionDate?.toLowerCase().includes(s)
+          m.sessionDate?.toLowerCase().includes(s) ||
+          m.materialType?.toLowerCase().includes(s)
         );
       })
     : materials;
@@ -68,6 +77,12 @@ const StudentMaterials = () => {
       return;
     }
     window.open(material.link, '_blank', 'noopener,noreferrer');
+  };
+
+  const typeLabel = (type) => {
+    if (type === 'lecture') return t('materials.typeLecture');
+    if (type === 'skill') return t('materials.typeSkill');
+    return t('materials.typeOther');
   };
 
   const accessible = materials.filter(m => m.hasAccess).length;
@@ -151,72 +166,90 @@ const StudentMaterials = () => {
         </motion.div>
       ) : (
         <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredMaterials.map((material) => (
-            <motion.div
-              key={material.id}
-              variants={cardVariants}
-              whileHover={material.hasAccess ? { y: -3 } : {}}
-              className="glass-card p-5 flex flex-col transition-all"
-              style={{ opacity: material.hasAccess ? 1 : 0.6 }}
-            >
-              {/* Card header */}
-              <div className="flex items-start justify-between mb-4">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{
-                    background: material.hasAccess
-                      ? 'rgba(219, 39, 119,0.15)'
-                      : 'var(--bg-surface)',
-                  }}
-                >
-                  {material.hasAccess
-                    ? <FileText size={20} style={{ color: '#DB2777' }} />
-                    : <Lock size={20} style={{ color: 'var(--text-muted)' }} />}
-                </div>
-                {material.hasAccess
-                  ? <span className="badge-green"><CheckCircle size={10} /> {t('student.unlocked')}</span>
-                  : <span className="badge-red"><Lock size={10} /> {t('student.locked')}</span>}
-              </div>
-
-              <h3 className="font-bold mb-2 line-clamp-2" style={{ color: 'var(--text-primary)' }}>
-                {material.title}
-              </h3>
-              {material.description && (
-                <p className="text-sm mb-3 line-clamp-2 flex-1" style={{ color: 'var(--text-muted)' }}>
-                  {material.description}
-                </p>
-              )}
-
-              <div className="mt-auto mb-4">
-                <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-                  <Calendar size={12} />
-                  <span>{material.sessionDate}</span>
-                </div>
-              </div>
-
-              <motion.button
-                onClick={() => openMaterial(material)}
-                whileHover={{ scale: material.hasAccess ? 1.02 : 1 }}
-                whileTap={{ scale: material.hasAccess ? 0.98 : 1 }}
-                disabled={!material.hasAccess}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all"
-                style={material.hasAccess ? {
-                  background: 'linear-gradient(135deg, rgba(236, 72, 153,0.15), rgba(244, 114, 182,0.15))',
-                  color: '#DB2777',
-                  border: '1px solid rgba(219, 39, 119,0.3)',
-                } : {
-                  background: 'var(--bg-surface)',
-                  color: 'var(--text-muted)',
-                  border: '1px solid var(--border)',
-                  cursor: 'not-allowed',
-                }}
+          {filteredMaterials.map((material) => {
+            const TypeIcon = TYPE_ICONS[material.materialType] || Sparkles;
+            return (
+              <motion.div
+                key={material.id}
+                variants={cardVariants}
+                whileHover={material.hasAccess ? { y: -3 } : {}}
+                className="glass-card overflow-hidden flex flex-col h-full transition-all"
+                style={{ opacity: material.hasAccess ? 1 : 0.7 }}
               >
-                {material.hasAccess
-                  ? <><ExternalLink size={15} /> {t('student.openMaterial')}</>
-                  : <><Lock size={15} /> {t('student.attendToUnlock')}</>}
-              </motion.button>
-            </motion.div>
-          ))}
+                <div className="p-3 pb-0 relative">
+                  <MaterialCover
+                    imageUrl={material.imageUrl}
+                    materialType={material.materialType || 'other'}
+                    alt={material.title}
+                  />
+                  {!material.hasAccess && (
+                    <div
+                      className="absolute inset-3 rounded-xl flex items-center justify-center"
+                      style={{ background: 'rgba(255,255,255,0.35)', backdropFilter: 'blur(1px)' }}
+                    >
+                      <div
+                        className="w-10 h-10 rounded-full flex items-center justify-center"
+                        style={{ background: 'rgba(255,255,255,0.9)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                      >
+                        <Lock size={18} style={{ color: 'var(--text-muted)' }} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-5 pt-3 flex flex-col flex-1">
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <span
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide"
+                      style={{ background: 'rgba(219, 39, 119,0.1)', color: '#DB2777' }}
+                    >
+                      <TypeIcon size={10} />
+                      {typeLabel(material.materialType || 'other')}
+                    </span>
+                    {material.hasAccess
+                      ? <span className="badge-green"><CheckCircle size={10} /> {t('student.unlocked')}</span>
+                      : <span className="badge-red"><Lock size={10} /> {t('student.locked')}</span>}
+                  </div>
+
+                  <h3 className="font-bold mb-2 line-clamp-2" style={{ color: 'var(--text-primary)' }}>
+                    {material.title}
+                  </h3>
+                  <p className="text-sm mb-3 line-clamp-2 min-h-[2.5rem] flex-1" style={{ color: 'var(--text-muted)' }}>
+                    {material.description || '\u00A0'}
+                  </p>
+
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                      <Calendar size={12} />
+                      <span>{material.sessionDate}</span>
+                    </div>
+                  </div>
+
+                  <motion.button
+                    onClick={() => openMaterial(material)}
+                    whileHover={{ scale: material.hasAccess ? 1.02 : 1 }}
+                    whileTap={{ scale: material.hasAccess ? 0.98 : 1 }}
+                    disabled={!material.hasAccess}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all mt-auto"
+                    style={material.hasAccess ? {
+                      background: 'linear-gradient(135deg, rgba(236, 72, 153,0.15), rgba(244, 114, 182,0.15))',
+                      color: '#DB2777',
+                      border: '1px solid rgba(219, 39, 119,0.3)',
+                    } : {
+                      background: 'var(--bg-surface)',
+                      color: 'var(--text-muted)',
+                      border: '1px solid var(--border)',
+                      cursor: 'not-allowed',
+                    }}
+                  >
+                    {material.hasAccess
+                      ? <><ExternalLink size={15} /> {t('student.openMaterial')}</>
+                      : <><Lock size={15} /> {t('student.attendToUnlock')}</>}
+                  </motion.button>
+                </div>
+              </motion.div>
+            );
+          })}
         </motion.div>
       )}
 
